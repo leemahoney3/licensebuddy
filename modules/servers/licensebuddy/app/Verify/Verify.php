@@ -274,38 +274,36 @@ class Verify {
         $isTrial        = Trial::isTrial($service->id);
         $todaysDate     = Carbon::now();
 
-        // if ($isTrial == 'Yes' && $todaysDate->gt(Carbon::createFromFormat('d-m-Y', Trial::expiryDate($service->id)))) {
+        if ($isTrial == 'Yes' && $todaysDate->gt(Carbon::createFromFormat('d-m-Y', Trial::expiryDate($service->id)))) {
 
-            
+             localAPI('ModuleSuspend', [
+                 'serviceid' => $service->id,
+                 'suspendreason' => 'Trial License Expired'
+             ]);
 
-        //     localAPI('ModuleSuspend', [
-        //         'serviceid' => $service->id,
-        //         'suspendreason' => 'Trial License Expired'
-        //     ]);
+             // Suspend the license and the service
+             License::where('service_id', $service->id)->update([
+                 'status' => 'Expired'
+             ]);
 
-        //     // Suspend the license and the service
-        //     License::where('service_id', $service->id)->update([
-        //         'status' => 'Expired'
-        //     ]);
+             $service->status = Config::getMaster('trialExpiredStatus');
+             $service->save();
 
-        //     $service->status = Config::getMaster('trialExpiredStatus');
-        //     $service->save();
+             Log::create([
+                 'license_id'    => $license->id,
+                 'description'   => 'The license key has been suspended as the trial license used has expired',
+                 'domain'        => $domain,
+                 'ip_address'    => $ipAddress,
+                 'directory'     => $directory,
+             ]);
 
-        //     Log::create([
-        //         'license_id'    => $license->id,
-        //         'description'   => 'The license key has been suspended as the trial license used has expired',
-        //         'domain'        => $domain,
-        //         'ip_address'    => $ipAddress,
-        //         'directory'     => $directory,
-        //     ]);
+             return json_encode([
+                 'status'        => 'invalid',
+                 'message'       => 'The license key has been suspended as the trial license used has expired',
+                 'licenseData'   => License::getData($license->id, $token),
+             ]);
 
-        //     return json_encode([
-        //         'status'        => 'invalid',
-        //         'message'       => 'The license key has been suspended as the trial license used has expired',
-        //         'licenseData'   => License::getData($license->id, $token),
-        //     ]);
-
-        // }
+        }
 
         # If is is a trial license and we are restricting domain and IP, do a check
         if ($isTrial == 'Yes' && Config::get($license->service_id, 'trialRestriction') == 'Domain & IP Address' && (Trial::checkDuplicateDomains($license->license_key, $allowedDomains) || Trial::checkDuplicateIpAddress($license->license_key, $allowedIpAddress))) {
