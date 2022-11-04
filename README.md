@@ -6,7 +6,7 @@ A software licensing solution for WHMCS
 
 ## How do I install this?
 
-Copy the ```modules``` folder into your root WHMCS directory. Refer to the documentation below on how to cofigure and use.
+Copy the ```modules``` folder into your root WHMCS directory. Refer to the documentation below on how to configure and use.
 
 ## How do I use this?
 
